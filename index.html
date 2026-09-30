@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>仲良しTube v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#040d0a;
+    --bg2:#07150f;
+    --panel:rgba(14,34,27,.72);
+    --panel2:#10281f;
+    --line:rgba(52,211,153,.14);
+    --line2:rgba(52,211,153,.32);
+    --txt:#e8fff6;
+    --dim:#86b3a2;
+    --em:#10b981;
+    --em2:#34d399;
+    --em3:#6ee7b7;
+    --deep:#047857;
+    --gold:#f5d68a;
+    --rad:20px;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:"Zen Kaku Gothic New",system-ui,sans-serif;min-height:100vh;overflow-x:hidden;
+  }
+  /* animated aurora background */
+  .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:float 18s ease-in-out infinite}
+  .aurora i:nth-child(1){width:620px;height:620px;background:#059669;top:-220px;left:-160px}
+  .aurora i:nth-child(2){width:520px;height:520px;background:#0d9488;top:30%;right:-200px;animation-delay:-6s;opacity:.35}
+  .aurora i:nth-child(3){width:420px;height:420px;background:#065f46;bottom:-180px;left:30%;animation-delay:-12s}
+  .aurora::after{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(rgba(52,211,153,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,.05) 1px,transparent 1px);
+    background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 75%)}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,40px) scale(1.1)}66%{transform:translate(-40px,60px) scale(.95)}}
+
+  a{color:inherit;text-decoration:none;cursor:pointer}
+  button{font-family:inherit}
+  svg.ic{width:20px;height:20px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  .app{display:flex;min-height:100vh}
+  .rail{
+    width:88px;flex:0 0 88px;padding:20px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:rgba(4,13,10,.6);backdrop-filter:blur(20px);border-right:1px solid var(--line);
+    position:sticky;top:0;height:100vh;z-index:30;
+  }
+  .logo{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;cursor:pointer;margin-bottom:18px;
+    background:linear-gradient(145deg,var(--em3),var(--em) 50%,var(--deep));
+    box-shadow:0 0 0 1px rgba(110,231,183,.4),0 12px 30px -6px rgba(16,185,129,.7);
+    transition:transform .5s var(--ease)}
+  .logo:hover{transform:rotate(-8deg) scale(1.08)}
+  .logo svg{width:26px;height:26px}
+  .rbtn{position:relative;width:62px;padding:11px 4px 9px;border:0;border-radius:16px;background:transparent;color:var(--dim);
+    cursor:pointer;font-size:10.5px;font-weight:700;display:grid;gap:5px;justify-items:center;transition:all .3s var(--ease)}
+  .rbtn:hover{color:var(--txt);background:rgba(16,185,129,.08)}
+  .rbtn.on{color:var(--em3);background:rgba(16,185,129,.14)}
+  .rbtn.on::before{content:"";position:absolute;left:-12px;top:50%;width:4px;height:26px;margin-top:-13px;border-radius:0 4px 4px 0;
+    background:var(--em2);box-shadow:0 0 14px var(--em2);animation:grow .4s var(--ease)}
+  @keyframes grow{from{height:0;margin-top:0}}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+  .topbar{position:sticky;top:0;z-index:20;display:flex;gap:18px;align-items:center;padding:14px 28px;
+    backdrop-filter:blur(20px) saturate(1.4);background:rgba(4,13,10,.65);border-bottom:1px solid var(--line)}
+  .brand{font-family:"Space Grotesk","Zen Kaku Gothic New",sans-serif;font-weight:700;font-size:19px;white-space:nowrap;letter-spacing:.3px}
+  .brand b{background:linear-gradient(90deg,var(--em3),var(--em));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand sup{font-size:10px;margin-left:4px;padding:2px 6px;border:1px solid var(--line2);border-radius:6px;color:var(--em3);vertical-align:middle}
+  .searchwrap{flex:1;max-width:640px;display:flex;align-items:center;gap:10px;padding:0 6px 0 18px;height:46px;
+    background:rgba(14,34,27,.7);border:1px solid var(--line);border-radius:14px;transition:all .3s var(--ease)}
+  .searchwrap:focus-within{border-color:var(--em2);box-shadow:0 0 0 4px rgba(16,185,129,.15),0 10px 30px -10px rgba(16,185,129,.5)}
+  .searchwrap>svg{color:var(--dim)}
+  .searchwrap input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--txt);font-size:15px;font-family:inherit}
+  .searchwrap button{height:34px;padding:0 16px;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;color:#022c1f;
+    background:linear-gradient(135deg,var(--em3),var(--em));display:flex;align-items:center;gap:6px;transition:transform .2s,filter .2s}
+  .searchwrap button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .searchwrap button svg{width:16px;height:16px}
+
+  .content{padding:30px 32px 90px;max-width:1560px;width:100%}
+  .page{animation:pageIn .6s var(--ease) both}
+  @keyframes pageIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  .hero{position:relative;padding:28px 30px;border-radius:26px;margin-bottom:28px;overflow:hidden;
+    background:linear-gradient(120deg,rgba(16,185,129,.22),rgba(4,120,87,.08) 60%,transparent);border:1px solid var(--line)}
+  .hero::after{content:"";position:absolute;top:0;left:-40%;width:40%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(110,231,183,.12),transparent);animation:shine 5s ease-in-out infinite}
+  @keyframes shine{0%{left:-40%}60%,100%{left:120%}}
+  .eyebrow{display:inline-flex;align-items:center;gap:6px;font-family:"Space Grotesk";font-size:11px;letter-spacing:2px;color:var(--em3);font-weight:700;text-transform:uppercase}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--em2);box-shadow:0 0 10px var(--em2);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{transform:scale(1.6);opacity:.4}}
+  h1.ttl{font-size:30px;font-weight:900;margin:8px 0 6px;display:flex;align-items:center;gap:12px;line-height:1.3}
+  h1.ttl svg{width:28px;height:28px;color:var(--em2)}
+  .sub{color:var(--dim);font-size:13.5px;margin:0}
+
+  .sechead{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:900;margin:30px 0 16px}
+  .sechead svg{color:var(--em2)}
+  .sechead::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
+  .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;cursor:pointer;
+    display:flex;flex-direction:column;transition:transform .45s var(--ease),border-color .3s,box-shadow .45s var(--ease);
+    animation:cardIn .6s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}}
+  .card:hover{transform:translateY(-6px);border-color:var(--line2);box-shadow:0 22px 40px -18px rgba(16,185,129,.55)}
+  .thumb{position:relative;aspect-ratio:16/9;background:var(--panel2);overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s var(--ease)}
+  .card:hover .thumb img{transform:scale(1.07)}
+  .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(2,20,14,.7))}
+  .play{position:absolute;left:50%;top:50%;z-index:2;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;color:#022c1f;
+    background:rgba(110,231,183,.95);transform:translate(-50%,-50%) scale(.5);opacity:0;transition:all .4s var(--ease);box-shadow:0 0 30px rgba(52,211,153,.7)}
+  .play svg{width:22px;height:22px;fill:currentColor;stroke:none;margin-left:3px}
+  .card:hover .play{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .badge{position:absolute;z-index:2;right:10px;bottom:10px;background:rgba(2,20,14,.85);backdrop-filter:blur(6px);color:var(--txt);
+    font-family:"Space Grotesk";font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;gap:4px}
+  .badge svg{width:13px;height:13px}
+  .badge.short{left:10px;right:auto;top:10px;bottom:auto;background:var(--em);color:#022c1f;border:0}
+  .cbody{padding:14px 15px 16px;display:flex;gap:11px}
+  .av{width:36px;height:36px;border-radius:50%;flex:0 0 36px;background:var(--panel2);object-fit:cover;border:1px solid var(--line2)}
+  .ct{font-size:14.5px;font-weight:700;line-height:1.45;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cm{font-size:12px;color:var(--dim);line-height:1.6}
+  .cm a:hover{color:var(--em3)}
+
+  /* channel cards (search) */
+  .chrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .chcard{position:relative;display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--rad);cursor:pointer;
+    background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(14,34,27,.7));border:1px solid var(--line);overflow:hidden;
+    transition:all .45s var(--ease);animation:cardIn .6s var(--ease) both;animation-delay:calc(var(--i,0) * 70ms)}
+  .chcard:hover{transform:translateY(-4px);border-color:var(--em2);box-shadow:0 18px 36px -16px rgba(16,185,129,.6)}
+  .chcard .pic{width:62px;height:62px;border-radius:50%;object-fit:cover;flex:0 0 62px;background:var(--panel2);
+    box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--em)}
+  .chcard .nm{font-weight:900;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chcard .go{margin-left:auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);color:var(--em3);transition:all .3s var(--ease)}
+  .chcard:hover .go{background:var(--em);color:#022c1f;transform:translateX(3px)}
+  .tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:var(--em3);background:rgba(16,185,129,.14);padding:2px 8px;border-radius:999px;margin-top:4px}
+  .tag svg{width:12px;height:12px}
+
+  /* watch */
+  .watch{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:30px}
+  .player{aspect-ratio:16/9;width:100%;border-radius:24px;overflow:hidden;background:#000;border:1px solid var(--line2);
+    box-shadow:0 30px 80px -30px rgba(16,185,129,.55);animation:pageIn .7s var(--ease) both}
+  .player iframe{width:100%;height:100%;border:0}
+  .vtitle{font-size:23px;font-weight:900;margin:20px 0 14px;line-height:1.4}
+  .chanbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);padding:14px 16px;border-radius:var(--rad)}
+  .chanbar img{width:48px;height:48px;border-radius:50%;border:2px solid var(--em)}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.08);border:1px solid var(--line);border-radius:12px;padding:8px 13px;font-size:12px;color:var(--dim);font-weight:700}
+  .chip svg{width:15px;height:15px}
+  button.chip{cursor:pointer;transition:all .3s var(--ease)}
+  button.chip:hover{border-color:var(--em2);color:var(--txt)}
+  button.chip.on{background:var(--em);color:#022c1f;border-color:var(--em)}
+  button.chip.on svg{fill:currentColor}
+  button.chip:active{transform:scale(.94)}
+  .desc{white-space:pre-wrap;word-break:break-word;background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:18px;margin-top:16px;font-size:13.5px;line-height:1.8;color:#c5e8da;max-height:220px;overflow:auto}
+  .side .card{flex-direction:row;margin-bottom:12px}
+  .side .thumb{width:168px;flex:0 0 168px}
+  .side .cbody{padding:9px 11px}
+  .side .ct{font-size:13px}
+  .side .play{width:38px;height:38px}
+  .cmt{display:flex;gap:13px;padding:16px;margin-bottom:10px;border-radius:16px;background:rgba(14,34,27,.45);border:1px solid transparent;
+    transition:border-color .3s;animation:cardIn .5s var(--ease) both;animation-delay:calc(var(--i,0) * 30ms)}
+  .cmt:hover{border-color:var(--line)}
+  .cmt img{width:40px;height:40px;border-radius:50%;flex:0 0 40px}
+  .cmt .body{font-size:13.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+  .cmt .who{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--em3);font-weight:700;margin-bottom:4px}
+  .cmt .who svg{width:13px;height:13px}
+  .owner{color:var(--gold)!important}
+  .likes{display:flex;align-items:center;gap:5px;margin-top:8px}
+  .likes svg{width:14px;height:14px}
+
+  .banner{width:100%;height:200px;object-fit:cover;border-radius:24px;border:1px solid var(--line);display:block;animation:pageIn .7s var(--ease) both}
+  .chanhead{display:flex;align-items:flex-end;gap:20px;padding:0 22px 8px;margin-top:-52px;position:relative}
+  .chanhead img.pic{width:112px;height:112px;border-radius:50%;border:5px solid var(--bg);box-shadow:0 0 0 2px var(--em),0 20px 40px -10px rgba(16,185,129,.6)}
+  .empty{color:var(--dim);padding:70px 0;text-align:center;display:grid;justify-items:center;gap:12px}
+  .empty svg{width:44px;height:44px;color:var(--em);opacity:.7}
+  .loader{display:flex;justify-content:center;gap:8px;padding:90px 0}
+  .loader i{width:12px;height:12px;border-radius:50%;background:var(--em2);animation:bounce 1s var(--ease) infinite}
+  .loader i:nth-child(2){animation-delay:.15s}.loader i:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-16px);opacity:1;box-shadow:0 0 16px var(--em2)}}
+  .skgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
+  .skel{border-radius:var(--rad);height:250px;background:linear-gradient(100deg,var(--panel2) 30%,rgba(52,211,153,.12) 50%,var(--panel2) 70%);background-size:300% 100%;animation:sk 1.4s linear infinite}
+  @keyframes sk{from{background-position:100% 0}to{background-position:-100% 0}}
+
+
+  /* login */
+  .login{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(2,10,7,.55);backdrop-filter:blur(6px)}
+  .login.hide{animation:fadeOut .5s var(--ease) forwards}
+  @keyframes fadeOut{to{opacity:0;visibility:hidden}}
+  .lcard{position:relative;width:100%;max-width:420px;padding:38px 36px;border-radius:24px;background:rgba(10,28,21,.85);
+    border:1px solid var(--line2);box-shadow:0 0 80px -20px rgba(16,185,129,.6);animation:cardIn .8s var(--ease) both;overflow:hidden}
+  .lcard::before{content:"";position:absolute;width:220px;height:220px;right:-80px;top:-80px;border-radius:50%;background:var(--em);filter:blur(80px);opacity:.45;animation:float 10s infinite}
+  .lcard h2{position:relative;text-align:center;margin:0;font-family:"Space Grotesk";font-size:28px;letter-spacing:1px}
+  .lcard h2 b{color:var(--em2)}
+  .lcard .lsub{text-align:center;color:var(--dim);font-size:13px;margin:6px 0 22px}
+  .divider{display:flex;align-items:center;gap:12px;font-family:"Space Grotesk";font-size:10px;letter-spacing:3px;color:var(--dim);margin-bottom:22px}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent)}
+  .flabel{font-family:"Space Grotesk";font-size:11px;letter-spacing:2px;color:var(--em3);margin-bottom:8px;display:block}
+  .field{display:flex;align-items:center;gap:10px;padding:0 14px;height:48px;border-radius:12px;background:rgba(2,10,7,.7);border:1px solid var(--line);transition:all .3s var(--ease);color:var(--dim)}
+  .field:focus-within{border-color:var(--em2);box-shadow:0 0 0 4px rgba(16,185,129,.15)}
+  .field input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:15px;font-family:inherit}
+  .field button{background:none;border:0;color:var(--dim);cursor:pointer;display:grid}
+  .lrow{display:flex;justify-content:space-between;align-items:center;margin:16px 0 22px;font-size:13px;color:var(--dim)}
+  .lrow label{display:flex;gap:8px;align-items:center;cursor:pointer}
+  .lrow input{accent-color:var(--em)}
+  .lbtn{width:100%;height:50px;border:0;border-radius:12px;cursor:pointer;font-weight:900;font-size:16px;color:#022c1f;
+    background:linear-gradient(135deg,var(--em3),var(--em));transition:all .3s var(--ease)}
+  .lbtn:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(16,185,129,.8)}
+  .lerr{color:#fca5a5;font-size:12.5px;min-height:18px;margin-top:10px;text-align:center}
+  .shake{animation:shake .4s}
+  @keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+
+  /* home */
+  .home{text-align:center;padding:30px 0 10px;position:relative}
+  .bigbrand{display:inline-flex;align-items:center;gap:6px;font-family:"Space Grotesk";font-size:clamp(38px,7vw,64px);font-weight:700;margin:20px 0 6px}
+  .bigbrand .box{padding:2px 18px;border-radius:14px;color:#022c1f;background:linear-gradient(145deg,var(--em3),var(--em));box-shadow:0 0 50px -6px rgba(16,185,129,.8);animation:glow 3s ease-in-out infinite}
+  @keyframes glow{50%{box-shadow:0 0 80px 0 rgba(16,185,129,.9)}}
+  .bigbrand .rest{background:linear-gradient(90deg,var(--txt),var(--em3));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .home .tag2{color:var(--dim);margin:0 0 30px}
+  .homesearch{max-width:640px;margin:0 auto 46px;height:54px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:18px;text-align:center}
+  .tile{padding:36px 16px 30px;border-radius:22px;cursor:pointer;background:linear-gradient(160deg,rgba(16,185,129,.14),rgba(14,34,27,.6));border:1px solid var(--line);
+    transition:all .45s var(--ease);animation:cardIn .6s var(--ease) both;animation-delay:calc(var(--i)*70ms)}
+  .tile:hover{transform:translateY(-8px);border-color:var(--em2);box-shadow:0 24px 40px -18px rgba(16,185,129,.7)}
+  .tile .ib{width:70px;height:70px;margin:0 auto 20px;border-radius:18px;display:grid;place-items:center;color:var(--em2);background:rgba(16,185,129,.1);border:1px solid var(--line2);transition:all .45s var(--ease)}
+  .tile:hover .ib{background:var(--em);color:#022c1f;transform:rotate(-6deg) scale(1.08)}
+  .tile .ib svg{width:30px;height:30px}
+  .tile b{display:block;font-size:17px;margin-bottom:8px}
+  .tile span{font-size:12.5px;color:var(--dim)}
+  .counter{position:absolute;right:0;top:0;padding:12px 14px;border-radius:16px;background:rgba(2,10,7,.7);border:1px solid var(--line2)}
+  .counter small{display:block;font-family:"Space Grotesk";font-size:9px;letter-spacing:3px;color:var(--dim);margin-bottom:8px}
+  .digits{display:flex;gap:5px}
+  .digits i{font-style:normal;width:30px;height:42px;display:grid;place-items:center;font-family:"Space Grotesk";font-size:22px;color:var(--em2);
+    background:#021a12;border:1px solid var(--line2);border-radius:7px;text-shadow:0 0 10px var(--em2);animation:flip .6s var(--ease) both;animation-delay:calc(var(--i)*80ms)}
+  @keyframes flip{from{transform:rotateX(90deg);opacity:0}}
+  @media(max-width:900px){.counter{position:static;display:inline-block;margin-bottom:10px}}
+  @media(max-width:1050px){.watch{grid-template-columns:1fr}}
+  @media(max-width:720px){
+    .rail{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:66px;flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:6px}
+    .rbtn.on::before{display:none}
+    .logo{display:none}
+    .topbar{padding:12px 14px;gap:10px}
+    .brand{font-size:15px}.brand sup{display:none}
+    .searchwrap button span{display:none}
+    .content{padding:18px 14px 96px}
+    .hero{padding:20px}
+    h1.ttl{font-size:22px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8M19 14v6l4-3z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 4 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-thumb" viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2.3l-1.3 7A2 2 0 0 1 17.7 20H7"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5M8 3h8l-1 6 3 4H6l3-4z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-empty" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M8 12h8M10 15h4"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="5" width="15" height="14" rx="3"/><path d="m17 10 5-3v10l-5-3"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 24 24"><circle cx="8.5" cy="9" r="3"/><circle cx="15.5" cy="9" r="3"/><path d="M4 19c1-3 3-4.5 4.5-4.5S12 16 12 16s2-1.5 3.5-1.5S19 16 20 19"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8M5 9.5V21h14V9.5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></symbol>
+  </defs>
+</svg>
+
+<div class="login" id="login" style="display:none">
+  <form class="lcard" id="lcard" onsubmit="doLogin(event)">
+    <h2>仲良し<b>Tube</b> v2</h2>
+    <p class="lsub">プライベートアクセス</p>
+    <div class="divider">SIGN IN</div>
+    <label class="flabel" for="pw">PASSWORD</label>
+    <div class="field"><svg class="ic"><use href="#i-lock"/></svg><input id="pw" type="password" placeholder="パスワード" autocomplete="current-password">
+      <button type="button" onclick="const p=document.getElementById('pw');p.type=p.type==='password'?'text':'password'"><svg class="ic"><use href="#i-eye"/></svg></button></div>
+    <div class="lrow"><label><input type="checkbox" id="keep" checked>ログイン状態を保持</label></div>
+    <button class="lbtn" type="submit">ログイン</button>
+    <div class="lerr" id="lerr"></div>
+  </form>
+</div>
+
+<div class="app">
+  <nav class="rail">
+    <div class="logo" onclick="go('#/')" title="仲良しTube v2"><svg class="ic" style="stroke:#022c1f;stroke-width:2.4"><use href="#i-logo"/></svg></div>
+    <button class="rbtn" data-nav="home" onclick="go('#/')"><svg class="ic"><use href="#i-home"/></svg>ホーム</button>
+    <button class="rbtn" data-nav="trending" onclick="go('#/trending')"><svg class="ic"><use href="#i-flame"/></svg>急上昇</button>
+    <button class="rbtn" data-nav="search" onclick="focusSearch()"><svg class="ic"><use href="#i-search"/></svg>さがす</button>
+    <button class="rbtn" data-nav="fav" onclick="go('#/fav')"><svg class="ic"><use href="#i-star"/></svg>お気に入り</button>
+    <button class="rbtn" data-nav="history" onclick="go('#/history')"><svg class="ic"><use href="#i-history"/></svg>履歴</button>
+    <button class="rbtn" onclick="logout()" style="margin-top:auto"><svg class="ic"><use href="#i-logout"/></svg>ログアウト</button>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="brand">仲良し<b>Tube</b><sup>v2</sup></div>
+      <form class="searchwrap" onsubmit="submitSearch(event)">
+        <svg class="ic"><use href="#i-search"/></svg>
+        <input id="q" placeholder="動画・チャンネルを検索" autocomplete="off" />
+        <button type="submit"><svg class="ic"><use href="#i-arrow"/></svg><span>検索</span></button>
+      </form>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+
+<script>
+const API = "https://dark-sun-c226.c00lkimx01.workers.dev/api/v1";
+const view = document.getElementById("view");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ic = (n, st="") => `<svg class="ic" ${st?`style="${st}"`:""}><use href="#i-${n}"/></svg>`;
+const go = h => { location.hash = h.replace(/^#/,"") ? h : "#/"; };
+const focusSearch = () => { const q=document.getElementById("q"); q.focus(); q.select(); };
+function submitSearch(e){ e.preventDefault(); const v=document.getElementById("q").value.trim(); if(v) go("#/search/"+encodeURIComponent(v)); }
+
+async function api(path){
+  const r = await fetch(API + path);
+  if(!r.ok) throw new Error("APIエラー " + r.status);
+  return r.json();
+}
+const num = n => typeof n === "number" ? n.toLocaleString("ja-JP") : null;
+function dur(s){ if(!s && s!==0) return ""; s=Math.floor(s); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0"); }
+function views(v){ if(v.viewCountText) return v.viewCountText; return v.viewCount ? num(v.viewCount)+"回視聴" : ""; }
+const thumbOf = v => v.thumbnail || (v.videoThumbnails&&v.videoThumbnails[0]&&v.videoThumbnails[0].url) ||
+  (v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg` : "");
+const avOf = o => { const t=o.authorThumbnails; return (t&&t.length&&t[t.length-1].url) || ""; };
+const fixUrl = u => u && u.startsWith("//") ? "https:"+u : u;
+
+const favKey="nakayoshi_fav_v2";
+const favs = () => { try{return JSON.parse(localStorage.getItem(favKey)||"[]")}catch(e){return []} };
+const isFav = id => favs().some(f=>f.videoId===id);
+function toggleFav(btn){
+  const v = JSON.parse(btn.dataset.v);
+  let f=favs(); const on = isFav(v.videoId);
+  f = on ? f.filter(x=>x.videoId!==v.videoId) : [v,...f];
+  localStorage.setItem(favKey, JSON.stringify(f.slice(0,200)));
+  btn.classList.toggle("on", !on);
+  btn.querySelector("span").textContent = on ? "お気に入り" : "登録済み";
+}
+
+function channelCardHTML(c, i){
+  return `<div class="chcard" style="--i:${i}" onclick="go('#/channel/${esc(c.authorId)}')">
+    ${c.pic?`<img class="pic" src="${esc(fixUrl(c.pic))}" alt="">`:`<div class="pic" style="display:grid;place-items:center">${ic("user")}</div>`}
+    <div style="min-width:0">
+      <div class="nm">${esc(c.author)}</div>
+      <div class="cm">${c.subs?esc(c.subs):(c.count?"検索結果に "+c.count+" 本":"")}</div>
+      <span class="tag">${ic("users")}チャンネル</span>
+    </div>
+    <div class="go">${ic("arrow","width:16px;height:16px")}</div>
+  </div>`;
+}
+function cardHTML(v, i=0){
+  if(v.type==="channel"||(v.authorId&&!v.videoId&&!v.playlistId)){
+    return channelCardHTML({authorId:v.authorId,author:v.author||v.title,pic:avOf(v),subs:v.subCountText}, i);
+  }
+  if(v.playlistId){
+    return `<div class="card" style="--i:${i}" onclick="go('#/playlist/${esc(v.playlistId)}')">
+      <div class="thumb"><img loading="lazy" src="${esc(thumbOf(v))}" alt=""><div class="play">${ic("play")}</div><span class="badge">${ic("list")}${esc(v.videoCount||"")}</span></div>
+      <div class="cbody"><div><p class="ct">${esc(v.title)}</p><div class="cm">${esc(v.author||"")}</div></div></div></div>`;
+  }
+  return `<div class="card" style="--i:${i}" onclick="go('#/watch/${esc(v.videoId)}')">
+    <div class="thumb"><img loading="lazy" src="${esc(thumbOf(v))}" alt="">
+      <div class="play">${ic("play")}</div>
+      ${v.isShort?'<span class="badge short">SHORT</span>':""}
+      ${v.lengthSeconds?`<span class="badge">${dur(v.lengthSeconds)}</span>`:""}</div>
+    <div class="cbody">
+      ${avOf(v)?`<img class="av" src="${esc(avOf(v))}" alt="">`:""}
+      <div style="min-width:0">
+        <p class="ct">${esc(v.title)}</p>
+        <div class="cm">${v.authorId?`<a onclick="event.stopPropagation();go('#/channel/${esc(v.authorId)}')">${esc(v.author||"")}</a>`:esc(v.author||"")}</div>
+        <div class="cm">${[views(v),v.publishedText||""].filter(Boolean).map(esc).join(" ・ ")}</div>
+      </div>
+    </div></div>`;
+}
+const listOf = d => Array.isArray(d) ? d : (d.results||d.videos||d.latestVideos||d.contents||d.items||d.relatedStreams||[]);
+const emptyHTML = t => `<div class="empty">${ic("empty")}<div>${t}</div></div>`;
+const gridHTML = arr => arr.length ? `<div class="grid">${arr.map((v,i)=>cardHTML(v,i)).join("")}</div>` : emptyHTML("なにも見つかりませんでした");
+const loading = () => { view.innerHTML = `<div class="page"><div class="skgrid">${'<div class="skel"></div>'.repeat(8)}</div></div>`; };
+const fail = e => { view.innerHTML = emptyHTML(`読み込みに失敗しました<br><small>${esc(e.message||e)}</small>`); };
+function setNav(k){ document.querySelectorAll(".rbtn").forEach(b=>b.classList.toggle("on", b.dataset.nav===k)); }
+const hero = (eyebrow, icon, title, sub) => `<div class="hero"><span class="eyebrow"><span class="dot"></span>${eyebrow}</span>
+  <h1 class="ttl">${ic(icon)}${title}</h1><p class="sub">${sub}</p></div>`;
+
+/* ---------- pages ---------- */
+async function pageTrending(){
+  setNav("trending"); loading();
+  try{
+    const d = await api("/trending");
+    view.innerHTML = `<div class="page">${hero("Trending now","flame","いま人気の動画","仲良しTube v2 がえらんだ、今みんなが見ている動画。")}${gridHTML(listOf(d))}</div>`;
+  }catch(e){ fail(e); }
+}
+async function pageSearch(q){
+  setNav("search"); document.getElementById("q").value=q; loading();
+  try{
+    const d = await api("/search?q="+encodeURIComponent(q));
+    const all = listOf(d);
+    // explicit channel results
+    const chans = new Map();
+    all.filter(x=>x.type==="channel").forEach(c=>chans.set(c.authorId,{authorId:c.authorId,author:c.author||c.title,pic:avOf(c),subs:c.subCountText}));
+    // channels derived from video authors
+    const counts = {};
+    all.forEach(v=>{ if(v.authorId && v.type!=="channel"){ counts[v.authorId]=counts[v.authorId]||{authorId:v.authorId,author:v.author,count:0,pic:avOf(v)}; counts[v.authorId].count++; }});
+    Object.values(counts).sort((a,b)=>b.count-a.count).forEach(c=>{ if(!chans.has(c.authorId)) chans.set(c.authorId,c); });
+    const chanList = [...chans.values()].slice(0,6);
+    const videos = all.filter(x=>x.type!=="channel");
+    view.innerHTML = `<div class="page">
+      ${hero("Search results","search",`「${esc(q)}」`,`${videos.length} 本の動画と ${chanList.length} 件のチャンネルが見つかりました。`)}
+      ${chanList.length?`<div class="sechead">${ic("users")}チャンネル</div><div class="chrow" id="chrow">${chanList.map(channelCardHTML).join("")}</div>`:""}
+      <div class="sechead">${ic("video")}動画</div>${gridHTML(videos)}</div>`;
+    // enrich channels with avatar and subscriber info
+    chanList.forEach(async (c,i)=>{
+      if(c.pic && c.subs) return;
+      try{
+        const info = await api(`/channels/${encodeURIComponent(c.authorId)}?tab=videos&sort=latest`);
+        c.pic = c.pic || avOf(info);
+        if(info.subCount) c.subs = "登録者 "+num(info.subCount)+"人";
+        const row = document.getElementById("chrow"); if(!row) return;
+        const el = row.children[i]; if(!el) return;
+        const tmp = document.createElement("div"); tmp.innerHTML = channelCardHTML(c,0);
+        const n = tmp.firstElementChild; n.style.animation="none"; el.replaceWith(n);
+      }catch(e){}
+    });
+  }catch(e){ fail(e); }
+}
+async function pageWatch(id){
+  setNav(""); loading();
+  try{
+    const v = await api("/videos/"+encodeURIComponent(id));
+    const rec = v.recommendedVideos||[];
+    const favData = JSON.stringify({videoId:v.videoId||id,title:v.title,author:v.author,authorId:v.authorId,thumbnail:thumbOf(v)});
+    const fav = isFav(id);
+    view.innerHTML = `<div class="page watch">
+      <div>
+        <div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0" allow="accelerometer;autoplay;encrypted-media;picture-in-picture;fullscreen" allowfullscreen></iframe></div>
+        <h1 class="vtitle">${esc(v.title)}</h1>
+        <div class="chanbar">
+          ${avOf(v)?`<img src="${esc(avOf(v))}" alt="">`:""}
+          <div style="min-width:0;flex:1">
+            <a style="font-weight:900" onclick="go('#/channel/${esc(v.authorId)}')">${esc(v.author||"")}</a>
+            <div class="cm">${esc(v.subCountText||"")}</div>
+          </div>
+          ${views(v)?`<span class="chip">${ic("eye")}${esc(views(v))}</span>`:""}
+          ${v.publishedText?`<span class="chip">${ic("clock")}${esc(v.publishedText)}</span>`:""}
+          <button class="chip ${fav?"on":""}" data-v="${esc(favData)}" onclick="toggleFav(this)">${ic("star")}<span>${fav?"登録済み":"お気に入り"}</span></button>
+        </div>
+        ${v.description?`<div class="desc">${esc(v.description)}</div>`:""}
+        <div class="sechead">${ic("chat")}コメント ${v.commentCount?"("+num(v.commentCount)+")":""}</div>
+        <div id="comments"><div class="loader"><i></i><i></i><i></i></div></div>
+      </div>
+      <aside class="side">
+        <div class="sechead" style="margin-top:0">${ic("sparkle")}次のおすすめ</div>
+        ${rec.map((r,i)=>cardHTML(r,i)).join("")||emptyHTML("なし")}
+      </aside>
+    </div>`;
+    addHist(JSON.parse(favData));
+    loadComments(id, v.comments);
+  }catch(e){ fail(e); }
+}
+async function loadComments(id, pre){
+  const box = document.getElementById("comments"); if(!box) return;
+  try{
+    let list = pre && pre.length ? pre : ((await api("/comments/"+encodeURIComponent(id))).comments||[]);
+    box.innerHTML = list.length ? list.map((c,i)=>`<div class="cmt" style="--i:${Math.min(i,20)}">
+      <img src="${esc(avOf(c))}" alt="">
+      <div style="min-width:0">
+        <div class="who ${c.authorIsChannelOwner?"owner":""}">${esc(c.author)} ${c.isPinned?ic("pin"):""} <span style="color:var(--dim);font-weight:400">${esc(c.publishedText||"")}</span></div>
+        <div class="body">${esc(c.content)}</div>
+        <div class="cm likes">${ic("thumb")}${esc(c.likeCount||0)}${c.replyCount?" ・ 返信 "+esc(c.replyCount):""}</div>
+      </div></div>`).join("") : emptyHTML("コメントはありません");
+  }catch(e){ box.innerHTML = emptyHTML("コメントを取得できませんでした"); }
+}
+async function pageChannel(cid){
+  setNav(""); loading();
+  try{
+    const d = await api(`/channels/${encodeURIComponent(cid)}?tab=videos&sort=latest`);
+    const banner = d.authorBanners&&d.authorBanners.length ? d.authorBanners[d.authorBanners.length-1].url : "";
+    const pic = avOf(d);
+    view.innerHTML = `<div class="page">
+      ${banner?`<img class="banner" src="${esc(fixUrl(banner))}" alt="">`:`<div class="banner" style="background:linear-gradient(120deg,var(--deep),var(--em),var(--em3))"></div>`}
+      <div class="chanhead">
+        ${pic?`<img class="pic" src="${esc(fixUrl(pic))}" alt="">`:""}
+        <div>
+          <h1 class="ttl" style="margin:0">${esc(d.author||"チャンネル")}</h1>
+          <p class="sub" style="margin:6px 0 0">${d.subCount?"登録者 "+num(d.subCount)+"人":""}${d.totalViews?" ・ 総再生 "+num(d.totalViews):""}${d.joined?" ・ 開設 "+esc(new Date(d.joined*1000).toLocaleDateString("ja-JP")):""}</p>
+        </div>
+      </div>
+      ${d.description?`<div class="desc" style="max-height:150px">${esc(d.description)}</div>`:""}
+      <div class="sechead">${ic("sparkle")}新着動画</div>
+      ${gridHTML(listOf(d))}</div>`;
+  }catch(e){ fail(e); }
+}
+async function pagePlaylist(pid){
+  setNav(""); loading();
+  try{
+    const d = await api("/playlists/"+encodeURIComponent(pid));
+    view.innerHTML = `<div class="page">${hero("Playlist","list",esc(d.title||"プレイリスト"),`${esc(d.author||"")}${d.videoCount?" ・ "+esc(d.videoCount)+"本":""}`)}${gridHTML(listOf(d))}</div>`;
+  }catch(e){ fail(e); }
+}
+function pageFav(){
+  setNav("fav");
+  view.innerHTML = `<div class="page">${hero("Favorites","star","お気に入り","この端末に保存された動画です。")}${gridHTML(favs())}</div>`;
+}
+
+/* login */
+const PASSWORD = "nkys";
+const authed = () => localStorage.getItem("nk_auth")==="1" || sessionStorage.getItem("nk_auth")==="1";
+function showLogin(){ const l=document.getElementById("login"); l.classList.remove("hide"); l.style.display="grid"; setTimeout(()=>document.getElementById("pw").focus(),100); }
+function doLogin(e){
+  e.preventDefault();
+  const pw=document.getElementById("pw"), card=document.getElementById("lcard");
+  if(pw.value.trim()===PASSWORD){
+    (document.getElementById("keep").checked?localStorage:sessionStorage).setItem("nk_auth","1");
+    const l=document.getElementById("login"); l.classList.add("hide"); setTimeout(()=>{l.style.display="none"},450); pw.value=""; document.getElementById("lerr").textContent=""; render();
+  }else{
+    document.getElementById("lerr").textContent="パスワードが違います";
+    card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+  }
+}
+function logout(){ localStorage.removeItem("nk_auth"); sessionStorage.removeItem("nk_auth"); showLogin(); }
+
+/* history */
+const histKey="nakayoshi_hist_v2";
+const hist = () => { try{return JSON.parse(localStorage.getItem(histKey)||"[]")}catch(e){return []} };
+function addHist(v){ const h=hist().filter(x=>x.videoId!==v.videoId); localStorage.setItem(histKey, JSON.stringify([v,...h].slice(0,100))); }
+function pageHistory(){
+  setNav("history");
+  view.innerHTML = `<div class="page">${hero("History","history","視聴履歴","最近見た動画です。")}${gridHTML(hist())}</div>`;
+}
+
+/* home */
+function pageHome(){
+  setNav("home");
+  let n = parseInt(localStorage.getItem("nk_count")||"0")+1; localStorage.setItem("nk_count",n);
+  const digits = String(n).padStart(6,"0").split("").map((d,i)=>`<i style="--i:${i}">${d}</i>`).join("");
+  const tiles=[["flame","トレンド","人気動画をチェック","#/trending"],["search","さがす","動画・チャンネル検索","search"],
+    ["star","お気に入り","保存した動画","#/fav"],["history","履歴","最近見た動画","#/history"],["logout","ログアウト","アクセスを終了","logout"]];
+  view.innerHTML = `<div class="page home">
+    <div class="counter"><small>TOTAL ACCESS</small><div class="digits">${digits}</div></div>
+    <div class="bigbrand"><span class="box">仲良し</span><span class="rest">Tube v2</span></div>
+    <p class="tag2">なかまと一緒に、動画をもっと楽しもう</p>
+    <form class="searchwrap homesearch" onsubmit="event.preventDefault();const v=this.hq.value.trim();if(v)go('#/search/'+encodeURIComponent(v))">
+      <svg class="ic"><use href="#i-search"/></svg><input name="hq" placeholder="動画・チャンネルを検索" autocomplete="off">
+      <button type="submit"><svg class="ic"><use href="#i-arrow"/></svg><span>検索</span></button></form>
+    <div class="tiles">${tiles.map((t,i)=>`<div class="tile" style="--i:${i}" onclick="${t[3]==="logout"?"logout()":t[3]==="search"?"document.querySelector('.homesearch input').focus()":`go('${t[3]}')`}">
+      <div class="ib">${ic(t[0])}</div><b>${t[1]}</b><span>${t[2]}</span></div>`).join("")}</div></div>`;
+}
+
+function render(){
+  if(!authed()){ showLogin(); return; }
+  const h = location.hash.replace(/^#\/?/,"");
+  const [p, a] = [h.split("/")[0], h.split("/").slice(1).join("/")];
+  if(p==="search") return pageSearch(decodeURIComponent(a||""));
+  if(p==="watch") return pageWatch(a);
+  if(p==="channel") return pageChannel(a);
+  if(p==="playlist") return pagePlaylist(a);
+  if(p==="fav") return pageFav();
+  if(p==="history") return pageHistory();
+  if(p==="trending") return pageTrending();
+  return pageHome();
+}
+window.addEventListener("hashchange", ()=>{ window.scrollTo({top:0,behavior:"smooth"}); render(); });
+render();
+</script>
+</body>
+</html>
